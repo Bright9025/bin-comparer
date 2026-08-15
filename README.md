@@ -2,6 +2,8 @@
 
 # 🔍 bin-comparer
 
+[English](./README.en.md) | [简体中文](./README.md)
+
 一款轻量级的二进制文件比较工具，提供图形化界面，可逐位分析两个文件的差异，并生成直观的 HTML 报告。
 
 </div>

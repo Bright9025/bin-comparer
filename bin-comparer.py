@@ -31,7 +31,7 @@ def compare_files(file1_path, file2_path):
 
 
 def generate_html_report(data1, diff_masks, total_diff, file1_path, file2_path, save_path):
-    """生成HTML报告，每行显示8个字节，不同位红色高亮"""
+    """生成HTML报告，每行显示8个字节，支持详细/精简模式切换"""
     html_lines = []
     html_lines.append("<!DOCTYPE html>")
     html_lines.append("<html>")
@@ -41,15 +41,20 @@ def generate_html_report(data1, diff_masks, total_diff, file1_path, file2_path, 
     html_lines.append("    <style>")
     html_lines.append("        body { font-family: 'Courier New', monospace; margin: 20px; }")
     html_lines.append("        .header { margin-bottom: 20px; }")
+    html_lines.append("        .controls { margin: 15px 0; }")
+    html_lines.append("        .controls button { padding: 6px 16px; font-size: 14px; cursor: pointer; }")
+    html_lines.append("        .controls span { margin-left: 15px; font-weight: bold; }")
     html_lines.append("        .byte-row { font-size: 14px; line-height: 1.6; }")
     html_lines.append("        .byte-group { display: inline-block; margin-right: 12px; }")
     html_lines.append("        .diff { color: red; font-weight: bold; }")
     html_lines.append("        .same { color: black; }")
     html_lines.append("        .offset { color: #0066cc; font-weight: bold; margin-right: 20px; }")
+    html_lines.append("        .hidden-row { display: none; }")  # 用于精简模式隐藏无差异行
     html_lines.append("    </style>")
     html_lines.append("</head>")
     html_lines.append("<body>")
 
+    # 头部信息
     html_lines.append("    <div class='header'>")
     html_lines.append(f"        <h2>二进制文件比较结果</h2>")
     html_lines.append(f"        <p><strong>文件1：</strong>{file1_path}</p>")
@@ -60,21 +65,26 @@ def generate_html_report(data1, diff_masks, total_diff, file1_path, file2_path, 
     if total_diff == 0:
         html_lines.append("    <p>两个文件完全相同。</p>")
     else:
-        html_lines.append("    <p>以下以第一个文件为基准，每行显示8个字节，红色位表示与文件2不同：</p>")
-        html_lines.append("    <div>")
+        html_lines.append("    <p>以下以第一个文件为基准，每行显示8个字节，红色位表示与文件2不同。</p>")
+        html_lines.append("    <div class='controls'>")
+        html_lines.append("        <button onclick='toggleMode()'>切换模式</button>")
+        html_lines.append("        <span id='modeLabel'>当前：详细模式</span>")
+        html_lines.append("    </div>")
+        html_lines.append("    <div id='content'>")
 
         bytes_per_row = 8
         total_bytes = len(data1)
         for start in range(0, total_bytes, bytes_per_row):
             end = min(start + bytes_per_row, total_bytes)
-            # 行首偏移（十六进制，4位）
-            offset_str = f"0x{start:04X}"
-            # 构建该行所有字节的HTML
+            row_has_diff = False
             row_parts = []
+            # 生成该行所有字节的HTML，并判断是否有差异
             for i in range(start, end):
                 byte = data1[i]
                 mask = diff_masks[i]
-                # 生成该字节的8位，高位到低位
+                if mask != 0:
+                    row_has_diff = True
+                # 生成该字节的8位
                 bit_spans = []
                 for bit_pos in range(7, -1, -1):
                     bit_val = (byte >> bit_pos) & 1
@@ -84,9 +94,37 @@ def generate_html_report(data1, diff_masks, total_diff, file1_path, file2_path, 
                 byte_html = "".join(bit_spans)
                 row_parts.append(f"<span class='byte-group'>{byte_html}</span>")
             row_html = "".join(row_parts)
-            html_lines.append(f"        <div class='byte-row'><span class='offset'>{offset_str}</span> {row_html}</div>")
+            offset_str = f"0x{start:04X}"
+            # 根据是否有差异决定初始显示（详细模式全部显示，但用data属性标记）
+            # 使用 data-has-diff 属性，值为 "true" 或 "false"
+            html_lines.append(
+                f"        <div class='byte-row' data-has-diff='{str(row_has_diff).lower()}'>{offset_str} {row_html}</div>"
+            )
 
         html_lines.append("    </div>")
+
+    # JavaScript 切换逻辑
+    html_lines.append("    <script>")
+    html_lines.append("        let isDetailed = true;  // 默认详细模式")
+    html_lines.append("        function toggleMode() {")
+    html_lines.append("            isDetailed = !isDetailed;")
+    html_lines.append("            const rows = document.querySelectorAll('.byte-row');")
+    html_lines.append("            const label = document.getElementById('modeLabel');")
+    html_lines.append("            if (isDetailed) {")
+    html_lines.append("                rows.forEach(row => row.style.display = '');")
+    html_lines.append("                label.textContent = '当前：详细模式';")
+    html_lines.append("            } else {")
+    html_lines.append("                rows.forEach(row => {")
+    html_lines.append("                    if (row.dataset.hasDiff === 'false') {")
+    html_lines.append("                        row.style.display = 'none';")
+    html_lines.append("                    } else {")
+    html_lines.append("                        row.style.display = '';")
+    html_lines.append("                    }")
+    html_lines.append("                });")
+    html_lines.append("                label.textContent = '当前：精简模式';")
+    html_lines.append("            }")
+    html_lines.append("        }")
+    html_lines.append("    </script>")
 
     html_lines.append("</body>")
     html_lines.append("</html>")

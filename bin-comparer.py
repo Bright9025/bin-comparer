@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
 import webbrowser
-import os
 
 def compare_files(file1_path, file2_path):
     with open(file1_path, 'rb') as f1, open(file2_path, 'rb') as f2:
@@ -46,9 +45,14 @@ def generate_html_report(data1, diff_masks, total_diff, file1_path, file2_path, 
     html_lines.append("            background: #f0f0f0;")
     html_lines.append("            border-radius: 4px;")
     html_lines.append("        }")
-    html_lines.append("        .controls button:active { transform: scale(0.95); }")  # 点击下沉
+    html_lines.append("        .controls button:active { transform: scale(0.95); }")
     html_lines.append("        .controls span { margin-left: 15px; font-weight: bold; font-size: 14px; }")
-    html_lines.append("        .byte-row { font-size: 14px; line-height: 1.6; }")
+    html_lines.append("        .byte-row {")
+    html_lines.append("            font-size: 14px;")
+    html_lines.append("            line-height: 1.6;")
+    html_lines.append("            content-visibility: auto;")           # 关键优化
+    html_lines.append("            contain-intrinsic-size: auto 30px;") # 预估行高，避免滚动抖动
+    html_lines.append("        }")
     html_lines.append("        .byte-group { display: inline-block; margin-right: 12px; }")
     html_lines.append("        .diff { color: red; font-weight: bold; }")
     html_lines.append("        .same { color: black; }")
@@ -102,21 +106,17 @@ def generate_html_report(data1, diff_masks, total_diff, file1_path, file2_path, 
 
         html_lines.append("    </div>")
 
-    # 优化后的切换逻辑：先更新文字，延迟一帧再切换class，提升点击反馈速度
+    # 切换逻辑（保持先更新文字，延迟一帧切换class）
     html_lines.append("    <script>")
     html_lines.append("        let isDetailed = true;")
     html_lines.append("        function toggleMode() {")
     html_lines.append("            const content = document.getElementById('content');")
     html_lines.append("            const label = document.getElementById('modeLabel');")
-    html_lines.append("            const btn = document.getElementById('toggleBtn');")
-    html_lines.append("            // 先立即更新按钮文字（让用户感觉到点击）")
     html_lines.append("            if (isDetailed) {")
     html_lines.append("                label.textContent = '当前：精简模式';")
     html_lines.append("            } else {")
     html_lines.append("                label.textContent = '当前：详细模式';")
     html_lines.append("            }")
-    html_lines.append("            // 使用 requestAnimationFrame 或 setTimeout 延迟执行样式切换，使文字先刷新")
-    html_lines.append("            // 这样用户会感觉响应更快")
     html_lines.append("            requestAnimationFrame(() => {")
     html_lines.append("                if (isDetailed) {")
     html_lines.append("                    content.classList.add('compact-mode');")

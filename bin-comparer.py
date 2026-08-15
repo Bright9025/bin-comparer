@@ -1,5 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
+import webbrowser
+import os
 
 def compare_files(file1_path, file2_path):
     with open(file1_path, 'rb') as f1, open(file2_path, 'rb') as f2:
@@ -32,17 +34,16 @@ def generate_html_report(data1, diff_masks, total_diff, file1_path, file2_path, 
     html_lines.append("    <meta charset='utf-8'>")
     html_lines.append("    <title>二进制文件比较结果</title>")
     html_lines.append("    <style>")
-    html_lines.append("        body { font-family: 'Courier New', monospace; margin: 20px; font-size: 22px; }")  # 放大
+    html_lines.append("        body { font-family: 'Courier New', monospace; margin: 20px; font-size: 16px; }")
     html_lines.append("        .header { margin-bottom: 20px; }")
     html_lines.append("        .controls { margin: 15px 0; }")
-    html_lines.append("        .controls button { padding: 8px 20px; font-size: 18px; cursor: pointer; }")
-    html_lines.append("        .controls span { margin-left: 15px; font-weight: bold; font-size: 18px; }")
-    html_lines.append("        .byte-row { font-size: 18px; line-height: 1.8; }")  # 行内字体放大
-    html_lines.append("        .byte-group { display: inline-block; margin-right: 14px; }")
+    html_lines.append("        .controls button { padding: 6px 16px; font-size: 14px; cursor: pointer; }")
+    html_lines.append("        .controls span { margin-left: 15px; font-weight: bold; font-size: 14px; }")
+    html_lines.append("        .byte-row { font-size: 14px; line-height: 1.6; }")
+    html_lines.append("        .byte-group { display: inline-block; margin-right: 12px; }")
     html_lines.append("        .diff { color: red; font-weight: bold; }")
     html_lines.append("        .same { color: black; }")
-    html_lines.append("        .offset { color: #0066cc; font-weight: bold; margin-right: 24px; }")  # 蓝色保持不变
-    html_lines.append("        /* 精简模式：隐藏无差异行 */")
+    html_lines.append("        .offset { color: #0066cc !important; font-weight: bold; margin-right: 20px; }")  # 强制蓝色
     html_lines.append("        .compact-mode .byte-row[data-has-diff='false'] { display: none; }")
     html_lines.append("    </style>")
     html_lines.append("</head>")
@@ -63,7 +64,7 @@ def generate_html_report(data1, diff_masks, total_diff, file1_path, file2_path, 
         html_lines.append("        <button onclick='toggleMode()'>切换模式</button>")
         html_lines.append("        <span id='modeLabel'>当前：详细模式</span>")
         html_lines.append("    </div>")
-        html_lines.append("    <div id='content'>")  # 不再使用class控制，由JS切换父级class
+        html_lines.append("    <div id='content'>")
 
         bytes_per_row = 8
         total_bytes = len(data1)
@@ -87,7 +88,7 @@ def generate_html_report(data1, diff_masks, total_diff, file1_path, file2_path, 
             row_html = "".join(row_parts)
             offset_str = f"0x{start:04X}"
             html_lines.append(
-                f"        <div class='byte-row' data-has-diff='{str(row_has_diff).lower()}'>{offset_str} {row_html}</div>"
+                f"        <div class='byte-row' data-has-diff='{str(row_has_diff).lower()}'><span class='offset'>{offset_str}</span> {row_html}</div>"
             )
 
         html_lines.append("    </div>")
@@ -147,7 +148,9 @@ def main():
 
     try:
         generate_html_report(data1, diff_masks, total_diff, file1, file2, save_path)
-        messagebox.showinfo("完成", f"HTML报告已保存至：\n{save_path}")
+        # 询问是否打开
+        if messagebox.askyesno("完成", f"HTML报告已保存至：\n{save_path}\n\n是否立即打开？"):
+            webbrowser.open(save_path)
     except Exception as e:
         messagebox.showerror("错误", f"保存HTML文件时出错：{e}")
 

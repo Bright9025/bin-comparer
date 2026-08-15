@@ -104,6 +104,10 @@ python bin_comparer.py
 
 欢迎提交 Issue 或 Pull Request 来改进本项目。
 
----
+
+## 📧 联系方式
+
+如有问题，请通过 GitHub Issues 联系。
+
 
 **Enjoy comparing! 🎉**

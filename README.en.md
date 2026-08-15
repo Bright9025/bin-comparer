@@ -102,8 +102,12 @@ This project is open‑source under the [MIT License](https://opensource.org/lic
 
 ## 🤝 Contributing
 
-Issues and Pull Requests are welcome!
+Issues and pull requests are welcome!
 
----
+
+## 📧 Contact
+
+For questions, please open a GitHub issue.
+
 
 **Enjoy comparing! 🎉**

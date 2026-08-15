@@ -37,13 +37,22 @@ def generate_html_report(data1, diff_masks, total_diff, file1_path, file2_path, 
     html_lines.append("        body { font-family: 'Courier New', monospace; margin: 20px; font-size: 16px; }")
     html_lines.append("        .header { margin-bottom: 20px; }")
     html_lines.append("        .controls { margin: 15px 0; }")
-    html_lines.append("        .controls button { padding: 6px 16px; font-size: 14px; cursor: pointer; }")
+    html_lines.append("        .controls button {")
+    html_lines.append("            padding: 6px 16px;")
+    html_lines.append("            font-size: 14px;")
+    html_lines.append("            cursor: pointer;")
+    html_lines.append("            transition: transform 0.1s;")
+    html_lines.append("            border: 1px solid #999;")
+    html_lines.append("            background: #f0f0f0;")
+    html_lines.append("            border-radius: 4px;")
+    html_lines.append("        }")
+    html_lines.append("        .controls button:active { transform: scale(0.95); }")  # 点击下沉
     html_lines.append("        .controls span { margin-left: 15px; font-weight: bold; font-size: 14px; }")
     html_lines.append("        .byte-row { font-size: 14px; line-height: 1.6; }")
     html_lines.append("        .byte-group { display: inline-block; margin-right: 12px; }")
     html_lines.append("        .diff { color: red; font-weight: bold; }")
     html_lines.append("        .same { color: black; }")
-    html_lines.append("        .offset { color: #0066cc !important; font-weight: bold; margin-right: 20px; }")  # 强制蓝色
+    html_lines.append("        .offset { color: #0066cc !important; font-weight: bold; margin-right: 20px; }")
     html_lines.append("        .compact-mode .byte-row[data-has-diff='false'] { display: none; }")
     html_lines.append("    </style>")
     html_lines.append("</head>")
@@ -61,7 +70,7 @@ def generate_html_report(data1, diff_masks, total_diff, file1_path, file2_path, 
     else:
         html_lines.append("    <p>以下以第一个文件为基准，每行显示8个字节，红色位表示与文件2不同。</p>")
         html_lines.append("    <div class='controls'>")
-        html_lines.append("        <button onclick='toggleMode()'>切换模式</button>")
+        html_lines.append("        <button id='toggleBtn' onclick='toggleMode()'>切换模式</button>")
         html_lines.append("        <span id='modeLabel'>当前：详细模式</span>")
         html_lines.append("    </div>")
         html_lines.append("    <div id='content'>")
@@ -93,19 +102,28 @@ def generate_html_report(data1, diff_masks, total_diff, file1_path, file2_path, 
 
         html_lines.append("    </div>")
 
-    # JavaScript 切换逻辑（利用class切换，极速响应）
+    # 优化后的切换逻辑：先更新文字，延迟一帧再切换class，提升点击反馈速度
     html_lines.append("    <script>")
     html_lines.append("        let isDetailed = true;")
     html_lines.append("        function toggleMode() {")
     html_lines.append("            const content = document.getElementById('content');")
     html_lines.append("            const label = document.getElementById('modeLabel');")
+    html_lines.append("            const btn = document.getElementById('toggleBtn');")
+    html_lines.append("            // 先立即更新按钮文字（让用户感觉到点击）")
     html_lines.append("            if (isDetailed) {")
-    html_lines.append("                content.classList.add('compact-mode');")
     html_lines.append("                label.textContent = '当前：精简模式';")
     html_lines.append("            } else {")
-    html_lines.append("                content.classList.remove('compact-mode');")
     html_lines.append("                label.textContent = '当前：详细模式';")
     html_lines.append("            }")
+    html_lines.append("            // 使用 requestAnimationFrame 或 setTimeout 延迟执行样式切换，使文字先刷新")
+    html_lines.append("            // 这样用户会感觉响应更快")
+    html_lines.append("            requestAnimationFrame(() => {")
+    html_lines.append("                if (isDetailed) {")
+    html_lines.append("                    content.classList.add('compact-mode');")
+    html_lines.append("                } else {")
+    html_lines.append("                    content.classList.remove('compact-mode');")
+    html_lines.append("                }")
+    html_lines.append("            });")
     html_lines.append("            isDetailed = !isDetailed;")
     html_lines.append("        }")
     html_lines.append("    </script>")
@@ -148,7 +166,6 @@ def main():
 
     try:
         generate_html_report(data1, diff_masks, total_diff, file1, file2, save_path)
-        # 询问是否打开
         if messagebox.askyesno("完成", f"HTML报告已保存至：\n{save_path}\n\n是否立即打开？"):
             webbrowser.open(save_path)
     except Exception as e:

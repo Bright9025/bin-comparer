@@ -50,8 +50,8 @@ def generate_html_report(data1, diff_masks, total_diff, file1_path, file2_path, 
     html_lines.append("        .byte-row {")
     html_lines.append("            font-size: 14px;")
     html_lines.append("            line-height: 1.6;")
-    html_lines.append("            content-visibility: auto;")           # 关键优化
-    html_lines.append("            contain-intrinsic-size: auto 30px;") # 预估行高，避免滚动抖动
+    html_lines.append("            content-visibility: auto;")
+    html_lines.append("            contain-intrinsic-size: auto 30px;")
     html_lines.append("        }")
     html_lines.append("        .byte-group { display: inline-block; margin-right: 12px; }")
     html_lines.append("        .diff { color: red; font-weight: bold; }")
@@ -106,25 +106,25 @@ def generate_html_report(data1, diff_masks, total_diff, file1_path, file2_path, 
 
         html_lines.append("    </div>")
 
-    # 切换逻辑（保持先更新文字，延迟一帧切换class）
+    # 修复后的切换逻辑（标签与模式完全同步）
     html_lines.append("    <script>")
     html_lines.append("        let isDetailed = true;")
     html_lines.append("        function toggleMode() {")
     html_lines.append("            const content = document.getElementById('content');")
     html_lines.append("            const label = document.getElementById('modeLabel');")
-    html_lines.append("            if (isDetailed) {")
-    html_lines.append("                label.textContent = '当前：精简模式';")
-    html_lines.append("            } else {")
-    html_lines.append("                label.textContent = '当前：详细模式';")
-    html_lines.append("            }")
+    html_lines.append("            // 计算目标状态")
+    html_lines.append("            const newIsDetailed = !isDetailed;")
+    html_lines.append("            // 立即更新标签")
+    html_lines.append("            label.textContent = newIsDetailed ? '当前：详细模式' : '当前：精简模式';")
+    html_lines.append("            // 延迟一帧执行样式切换（让文字先刷新）")
     html_lines.append("            requestAnimationFrame(() => {")
-    html_lines.append("                if (isDetailed) {")
-    html_lines.append("                    content.classList.add('compact-mode');")
-    html_lines.append("                } else {")
+    html_lines.append("                if (newIsDetailed) {")
     html_lines.append("                    content.classList.remove('compact-mode');")
+    html_lines.append("                } else {")
+    html_lines.append("                    content.classList.add('compact-mode');")
     html_lines.append("                }")
     html_lines.append("            });")
-    html_lines.append("            isDetailed = !isDetailed;")
+    html_lines.append("            isDetailed = newIsDetailed;")
     html_lines.append("        }")
     html_lines.append("    </script>")
 
